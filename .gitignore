@@ -160,3 +160,9 @@ cython_debug/
 #.idea/
 
 *.pkl
+logs/
+catboost_info/
+2.13 RoBERTa/
+2.14 gpt_model/
+2.14 gpt_tokenizer/
+results/
