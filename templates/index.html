@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hate Speech Detection</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Optional: jQuery and Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      .hateful-label {
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+
+      .non-hateful-label {
+        background-color: green;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+
+      /* Updated header styling */
+      h2.card-title {
+        font-size: 2.5em;
+        font-weight: 600;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      p.text-center {
+        font-size: 1.2em;
+        font-style: italic;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="card-title text-center">Hate Speech Detection</h2>
+              <p class="text-center">
+                For Transliterated English and Sinhala Code-Mixed Data
+              </p>
+
+              <div class="form-group mt-4">
+                <textarea
+                  id="text"
+                  class="form-control"
+                  placeholder="Enter the text here..."
+                  rows="4"
+                ></textarea>
+              </div>
+
+              <button
+                onclick="evaluateHateSpeech()"
+                class="btn btn-primary btn-block"
+              >
+                Evaluate
+              </button>
+
+              <div class="mt-4">
+                <p id="result" class="font-weight-bold"></p>
+                <p id="probs"></p>
+                <!-- Adjusted canvas dimensions for smaller chart -->
+                <canvas id="pieChart" width="200" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let myPieChart = null; // This will hold the chart instance
+
+      async function evaluateHateSpeech() {
+        const response = await fetch("/predict", {
+          method: "POST",
+          body: new URLSearchParams({
+            text: document.getElementById("text").value,
+          }),
+        });
+        const data = await response.json();
+
+        // Update the prediction label with appropriate class
+        const resultElem = document.getElementById("result");
+        if (data.label === "Hateful") {
+          resultElem.textContent = "Hateful";
+          resultElem.className = "hateful-label";
+        } else {
+          resultElem.textContent = "Not Hateful";
+          resultElem.className = "non-hateful-label";
+        }
+
+        document.getElementById(
+          "probs"
+        ).textContent = `Probabilities - Hateful: ${data.probabilities.hateful.toFixed(
+          2
+        )}, Not Hateful: ${data.probabilities.not_hateful.toFixed(2)}`;
+
+        // Pie Chart
+        if (myPieChart) {
+          myPieChart.destroy(); // Destroy any existing chart instance
+        }
+
+        const ctx = document.getElementById("pieChart").getContext("2d");
+        myPieChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: ["Hateful", "Not Hateful"],
+            datasets: [
+              {
+                data: [
+                  data.probabilities.hateful,
+                  data.probabilities.not_hateful,
+                ],
+                backgroundColor: ["#FF9999", "#99FF99"], // Lightened colors
+                borderColor: ["#FF9999", "#99FF99"],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            legend: {
+              display: false, // Hide legend to make chart subtler
+            },
+            animation: {
+              animateScale: true,
+              animateRotate: true,
+            },
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

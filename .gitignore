@@ -166,3 +166,5 @@ catboost_info/
 2.14 gpt_model/
 2.14 gpt_tokenizer/
 results/
+2.11 Bert model2/
+.vscode/
